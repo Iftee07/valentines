@@ -60,6 +60,42 @@ canvas {
   touch-action: none; /* helps on mobile */
 }
 
+#heart-shower-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  overflow: hidden;
+}
+
+.heart-shower-heart {
+  position: absolute;
+  top: -8vh;
+  left: 0;
+  color: var(--primary);
+  filter: drop-shadow(0 6px 12px rgba(201, 24, 74, 0.25));
+  animation: heart-shower-fall var(--heart-duration, 4s) linear forwards;
+  transform: translate3d(var(--drift-start, 0px), 0, 0)
+    scale(var(--heart-scale, 1));
+  opacity: 0;
+}
+
+@keyframes heart-shower-fall {
+  0% {
+    transform: translate3d(var(--drift-start, 0px), -12vh, 0)
+      scale(var(--heart-scale, 1));
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--drift-end, 0px), 110vh, 0)
+      scale(var(--heart-scale, 0.85));
+    opacity: 0;
+  }
+}
+
 /* UI Layer */
 #ui-layer {
   position: absolute;

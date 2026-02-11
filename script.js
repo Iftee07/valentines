@@ -1,24 +1,28 @@
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
 // Game State
-let gameState = 'START'; // START, PLAYING, PROPOSAL, END
+let gameState = "START"; // START, PLAYING, PROPOSAL, END
 let score = 0;
 const WIN_SCORE = 15; // Hearts needed to fill the meter
 let player;
 let hearts = [];
 let particles = [];
+let heartShowerActive = false;
+let heartShowerIntervalId = null;
+let heartShowerTimeoutId = null;
 let animationId;
-let loveMeter = document.getElementById('love-fill');
+let loveMeter = document.getElementById("love-fill");
 let noEscapeCount = 0;
 
 // DOM Elements
-const startScreen = document.getElementById('start-screen');
-const proposalScreen = document.getElementById('proposal-screen');
-const celebrationScreen = document.getElementById('celebration-screen');
-const startBtn = document.getElementById('start-btn');
-const yesBtn = document.getElementById('yes-btn');
-const noBtn = document.getElementById('no-btn');
+const startScreen = document.getElementById("start-screen");
+const proposalScreen = document.getElementById("proposal-screen");
+const celebrationScreen = document.getElementById("celebration-screen");
+const startBtn = document.getElementById("start-btn");
+const yesBtn = document.getElementById("yes-btn");
+const noBtn = document.getElementById("no-btn");
+const heartLayer = document.getElementById("heart-shower-layer");
 
 // HiDPI Resize Handling (draw in CSS pixels, scale internally for sharp canvas)
 function resize() {
@@ -36,7 +40,7 @@ function resize() {
     player.y = window.innerHeight - 100;
   }
 }
-window.addEventListener('resize', resize);
+window.addEventListener("resize", resize);
 
 // Player Object
 class Player {
@@ -50,7 +54,7 @@ class Player {
 
   draw() {
     // Minimal basket
-    ctx.fillStyle = '#ff4d6d';
+    ctx.fillStyle = "#ff4d6d";
 
     // basket body
     ctx.beginPath();
@@ -59,7 +63,7 @@ class Player {
 
     // handle
     ctx.beginPath();
-    ctx.strokeStyle = '#c9184a';
+    ctx.strokeStyle = "#c9184a";
     ctx.lineWidth = 5;
     ctx.arc(this.x + this.w / 2, this.y - 10, this.w / 2, Math.PI, 0, false);
     ctx.stroke();
@@ -69,7 +73,8 @@ class Player {
     this.x += this.dx;
 
     if (this.x < 0) this.x = 0;
-    if (this.x + this.w > window.innerWidth) this.x = window.innerWidth - this.w;
+    if (this.x + this.w > window.innerWidth)
+      this.x = window.innerWidth - this.w;
   }
 }
 
@@ -97,7 +102,7 @@ class Heart {
       this.x - this.size / 2,
       this.y,
       this.x - this.size / 2,
-      this.y + topCurveHeight
+      this.y + topCurveHeight,
     );
 
     // bottom left curve
@@ -107,7 +112,7 @@ class Heart {
       this.x,
       this.y + (this.size + topCurveHeight) / 2,
       this.x,
-      this.y + this.size
+      this.y + this.size,
     );
 
     // bottom right curve
@@ -117,7 +122,7 @@ class Heart {
       this.x + this.size / 2,
       this.y + (this.size + topCurveHeight) / 2,
       this.x + this.size / 2,
-      this.y + topCurveHeight
+      this.y + topCurveHeight,
     );
 
     // top right curve
@@ -127,7 +132,7 @@ class Heart {
       this.x,
       this.y,
       this.x,
-      this.y + topCurveHeight
+      this.y + topCurveHeight,
     );
 
     ctx.fill();
@@ -147,8 +152,8 @@ class Particle {
     this.speedX = opts.speedX ?? (Math.random() - 0.5) * 4;
     this.speedY = opts.speedY ?? (Math.random() - 0.5) * 4;
     this.life = opts.life ?? 100;
-    this.color = opts.color ?? 'rgba(255, 255, 255, 0.85)';
-    this.kind = opts.kind ?? 'spark'; // spark | confetti
+    this.color = opts.color ?? "rgba(255, 255, 255, 0.85)";
+    this.kind = opts.kind ?? "spark"; // spark | confetti
     this.rotation = Math.random() * Math.PI * 2;
     this.rotationSpeed = (Math.random() - 0.5) * 0.25;
   }
@@ -164,7 +169,7 @@ class Particle {
     ctx.globalAlpha = Math.max(0, this.life / 100);
     ctx.fillStyle = this.color;
 
-    if (this.kind === 'confetti') {
+    if (this.kind === "confetti") {
       ctx.save();
       ctx.translate(this.x, this.y);
       ctx.rotate(this.rotation);
@@ -184,19 +189,19 @@ class Particle {
 function handleInput(e) {
   if (!player) return;
 
-  if (e.type === 'touchmove') {
+  if (e.type === "touchmove") {
     // prevent page scroll while playing
     e.preventDefault();
   }
 
-  if (e.type === 'mousemove' || e.type === 'touchmove') {
-    const clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+  if (e.type === "mousemove" || e.type === "touchmove") {
+    const clientX = e.type === "mousemove" ? e.clientX : e.touches[0].clientX;
     player.x = clientX - player.w / 2;
   }
 }
 
-window.addEventListener('mousemove', handleInput);
-window.addEventListener('touchmove', handleInput, { passive: false });
+window.addEventListener("mousemove", handleInput);
+window.addEventListener("touchmove", handleInput, { passive: false });
 
 // Game Functions
 function spawnHeart() {
@@ -216,7 +221,7 @@ function updateGame() {
     player.draw();
   }
 
-  if (gameState === 'PLAYING') {
+  if (gameState === "PLAYING") {
     spawnHeart();
 
     for (let i = hearts.length - 1; i >= 0; i--) {
@@ -225,7 +230,11 @@ function updateGame() {
       heart.draw();
 
       // Collision detection (simple)
-      if (heart.y + heart.size > player.y && heart.x > player.x && heart.x < player.x + player.w) {
+      if (
+        heart.y + heart.size > player.y &&
+        heart.x > player.x &&
+        heart.x < player.x + player.w
+      ) {
         hearts.splice(i, 1);
         score++;
         createSpark(heart.x, heart.y);
@@ -264,13 +273,13 @@ function burstConfetti() {
   for (let i = 0; i < count; i++) {
     particles.push(
       new Particle(Math.random() * window.innerWidth, -10, {
-        kind: 'confetti',
+        kind: "confetti",
         size: Math.random() * 5 + 2,
         speedX: (Math.random() - 0.5) * 10,
         speedY: Math.random() * 6 + 2,
         life: 140,
         color: `hsla(${Math.random() * 360}, 90%, 65%, 0.95)`,
-      })
+      }),
     );
   }
 }
@@ -281,12 +290,12 @@ function updateScore() {
 }
 
 function triggerProposal() {
-  gameState = 'PROPOSAL';
+  gameState = "PROPOSAL";
 
   // Small delay for a smoother transition
   setTimeout(() => {
-    proposalScreen.classList.remove('hidden');
-    proposalScreen.classList.add('active');
+    proposalScreen.classList.remove("hidden");
+    proposalScreen.classList.add("active");
   }, 450);
 }
 
@@ -295,35 +304,48 @@ function startGame() {
   player = new Player();
   hearts = [];
   particles = [];
+  heartShowerActive = false;
+  if (heartShowerIntervalId) {
+    clearInterval(heartShowerIntervalId);
+    heartShowerIntervalId = null;
+  }
+  if (heartShowerTimeoutId) {
+    clearTimeout(heartShowerTimeoutId);
+    heartShowerTimeoutId = null;
+  }
+  if (heartLayer) {
+    heartLayer.innerHTML = "";
+  }
   score = 0;
   noEscapeCount = 0;
   updateScore();
-  gameState = 'PLAYING';
+  gameState = "PLAYING";
 
-  startScreen.classList.remove('active');
-  startScreen.classList.add('hidden');
+  startScreen.classList.remove("active");
+  startScreen.classList.add("hidden");
 
   if (!animationId) updateGame();
 }
 
 // Event Listeners
-startBtn.addEventListener('click', startGame);
+startBtn.addEventListener("click", startGame);
 
-yesBtn.addEventListener('click', () => {
-  gameState = 'END';
+yesBtn.addEventListener("click", () => {
+  gameState = "END";
 
-  proposalScreen.classList.remove('active');
-  proposalScreen.classList.add('hidden');
+  proposalScreen.classList.remove("active");
+  proposalScreen.classList.add("hidden");
 
-  celebrationScreen.classList.remove('hidden');
-  celebrationScreen.classList.add('active');
+  celebrationScreen.classList.remove("hidden");
+  celebrationScreen.classList.add("active");
 
   burstConfetti();
+  startHeartShower();
 });
 
 // "No" button runs away (but stays in-bounds + stops after a few tries)
-noBtn.addEventListener('mouseover', moveNoButton);
-noBtn.addEventListener('touchstart', moveNoButton, { passive: true });
+noBtn.addEventListener("mouseover", moveNoButton);
+noBtn.addEventListener("touchstart", moveNoButton, { passive: true });
 
 function moveNoButton() {
   noEscapeCount++;
@@ -336,9 +358,69 @@ function moveNoButton() {
   const x = Math.max(padding, Math.random() * Math.max(padding, maxX));
   const y = Math.max(padding, Math.random() * Math.max(padding, maxY));
 
-  noBtn.style.position = 'fixed';
+  noBtn.style.position = "fixed";
   noBtn.style.left = `${x}px`;
   noBtn.style.top = `${y}px`;
+}
+
+function spawnCelebrationHeart() {
+  if (!heartLayer) return;
+
+  const heart = document.createElement("span");
+  heart.className = "heart-shower-heart";
+  heart.textContent = Math.random() < 0.2 ? "💘" : "❤️";
+
+  const left = Math.random() * 100;
+  heart.style.left = `${left}vw`;
+
+  const duration = Math.random() * 1.8 + 3.2; // 3.2s - 5s
+  heart.style.setProperty("--heart-duration", `${duration}s`);
+
+  const driftStart = (Math.random() - 0.5) * 24;
+  const driftEnd = driftStart + (Math.random() - 0.5) * 140;
+  heart.style.setProperty("--drift-start", `${driftStart}px`);
+  heart.style.setProperty("--drift-end", `${driftEnd}px`);
+
+  const scale = Math.random() * 0.4 + 0.8;
+  heart.style.setProperty("--heart-scale", scale.toString());
+
+  const fontSize = Math.random() * 20 + 20;
+  heart.style.fontSize = `${fontSize}px`;
+
+  heartLayer.appendChild(heart);
+
+  if (heartLayer.childElementCount > 140) {
+    heartLayer.removeChild(heartLayer.firstElementChild);
+  }
+
+  heart.addEventListener("animationend", () => {
+    heart.remove();
+  });
+}
+
+function startHeartShower() {
+  heartShowerActive = true;
+
+  if (heartShowerIntervalId) {
+    clearInterval(heartShowerIntervalId);
+  }
+
+  spawnCelebrationHeart();
+  heartShowerIntervalId = setInterval(() => {
+    if (!heartShowerActive) return;
+    spawnCelebrationHeart();
+    if (Math.random() > 0.5) spawnCelebrationHeart();
+  }, 150);
+
+  if (heartShowerTimeoutId) clearTimeout(heartShowerTimeoutId);
+  heartShowerTimeoutId = setTimeout(() => {
+    heartShowerActive = false;
+    if (heartShowerIntervalId) {
+      clearInterval(heartShowerIntervalId);
+      heartShowerIntervalId = null;
+    }
+    heartShowerTimeoutId = null;
+  }, 4000);
 }
 
 // Initialize
