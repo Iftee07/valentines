@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hi Picchiii ❤️</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <!-- Background Music (Optional, user initiates) -->
+    <audio id="bg-music" loop>
+      <source src="music.mp3" type="audio/mpeg" />
+    </audio>
+
+    <div id="game-container">
+      <canvas id="gameCanvas"></canvas>
+
+      <!-- UI Overlay -->
+      <div id="ui-layer">
+        <div id="score-board" aria-label="Love meter">
+          <span class="meter-label">❤️ Love Meter 😘</span>
+          <div
+            class="progress-bar"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+          >
+            <div id="love-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Start Screen -->
+      <div id="start-screen" class="screen active">
+        <div class="card">
+          <h1>One small game.</h1>
+          <p>
+            Catch the hearts to unlock something I've been wanting to ask you.
+            <br />
+            <span class="hint"
+              >Tip: move your finger/mouse to guide the basket.</span
+            >
+          </p>
+          <button id="start-btn" class="btn btn-primary">Start</button>
+        </div>
+      </div>
+
+      <!-- Proposal Modal (Hidden initially) -->
+      <div id="proposal-screen" class="screen hidden">
+        <div class="proposal-content card">
+          <h1>my dear abontika, will you be my valentine?</h1>
+          <p class="sub-text">
+            I know I'm clumsy, but will you take a chance on this silly heart
+            catcher?
+          </p>
+          <div class="buttons">
+            <button id="yes-btn" class="btn btn-primary">Yes</button>
+            <button id="no-btn" class="btn btn-ghost">No</button>
+          </div>
+          <p class="micro">(If you press “No”, it might get shy.)</p>
+        </div>
+      </div>
+
+      <!-- Celebration Overlay -->
+      <div id="celebration-screen" class="screen hidden">
+        <div class="card">
+          <h1>Okay… it's official.</h1>
+          <h2>I love you shonaaa! Today, tomorrow and FOREVER ❤️</h2>
+
+          <div class="letter">
+            <p>
+              I’m not the smoothest at expressing feelings… but somehow you
+              still make my heart flutter. I want us to be happy together, and
+              I’ll be there when you’re laughing, crying, annoyed at me, or
+              pretending you don’t care. If I slip up, don’t be disappointed —
+              come closer, tell me what you need, and let me make it right. I’m
+              serious about you and I’ll choose you again and again. ❤️
+            </p>
+            <p class="sign">ILYY sooo soo soooooo muchhh</p>
+          </div>
+
+          <p class="final-note">(Screenshot this. I want to keep it.)</p>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
